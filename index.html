@@ -1,0 +1,183 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rafael XRB | YouTube</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #050505; 
+            color: #ffffff; 
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .yt-red { color: #FF0000; }
+        .bg-yt { background-color: #FF0000; }
+        .video-container { 
+            position: relative; 
+            padding-bottom: 56.25%; 
+            height: 0; 
+            overflow: hidden; 
+            border-radius: 20px; 
+            background: #111;
+        }
+        .video-container iframe { 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            border: none;
+        }
+        .glass { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(12px); 
+        }
+        .video-card-hover:hover {
+            border-color: #FF0000;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navegação -->
+    <nav class="fixed w-full z-50 glass">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div id="chan-icon" class="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center overflow-hidden">
+                    <i class="fab fa-youtube yt-red"></i>
+                </div>
+                <span class="font-extrabold text-xl tracking-tighter uppercase">Rafael <span class="yt-red">XRB</span></span>
+            </div>
+            <a id="sub-button" href="https://youtube.com/@rafael_xrb" target="_blank" class="bg-yt px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition">SUBSCREVER</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="pt-32 pb-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            
+            <div class="grid lg:grid-cols-2 gap-16 items-center mb-24">
+                <div>
+                    <h1 id="hero-title" class="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tighter">Rafael XRB</h1>
+                    <p id="hero-desc" class="text-gray-400 text-lg mb-8 line-clamp-3">A carregar os últimos vídeos diretamente do YouTube...</p>
+                    
+                    <div class="flex gap-6">
+                        <div class="text-center">
+                            <div id="stat-subs" class="text-3xl font-bold yt-red">---</div>
+                            <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Inscritos</div>
+                        </div>
+                        <div class="text-center pl-6 border-l border-white/10">
+                            <div id="stat-views" class="text-3xl font-bold">---</div>
+                            <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Visualizações</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="video-container shadow-2xl" id="main-player">
+                    <div class="absolute inset-0 flex items-center justify-center bg-neutral-900">
+                        <div class="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Galeria de Vídeos -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold flex items-center gap-4">
+                    <span class="w-12 h-1 bg-yt"></span> VÍDEOS RECENTES
+                </h2>
+            </div>
+            
+            <div id="video-grid" class="grid md:grid-cols-3 gap-8">
+                <!-- Skeletons enquanto carrega -->
+                <div class="h-64 glass rounded-3xl animate-pulse"></div>
+                <div class="h-64 glass rounded-3xl animate-pulse"></div>
+                <div class="h-64 glass rounded-3xl animate-pulse"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé Atualizado -->
+    <footer class="py-16 border-t border-white/5 text-center text-gray-600 text-xs">
+        &copy; 2026 RAFAEL SBX. Todos os direitos reservados.
+    </footer>
+
+    <script>
+        const API_KEY = 'AIzaSyCD88QgRzIYReFybGPz4FVYYa24A3T-xJU';
+        const CHANNEL_HANDLE = '@rafael_xrb';
+        const FALLBACK_ID = 'UC3-Y367N8XyO8o8p964p74w';
+
+        async function init() {
+            try {
+                // Passo 1: Obter ID do canal
+                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${CHANNEL_HANDLE}&type=channel&key=${API_KEY}`;
+                const searchRes = await fetch(searchUrl);
+                const searchData = await searchRes.json();
+
+                let channelId = FALLBACK_ID;
+                if (searchData.items && searchData.items.length > 0) {
+                    channelId = searchData.items[0].id.channelId;
+                }
+
+                // Passo 2: Obter estatísticas do canal
+                const chanRes = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id=${channelId}&key=${API_KEY}`);
+                const chanData = await chanRes.json();
+
+                if (!chanData.items) return;
+
+                const channel = chanData.items[0];
+                const uploadsId = channel.contentDetails.relatedPlaylists.uploads;
+
+                document.getElementById('chan-icon').innerHTML = `<img src="${channel.snippet.thumbnails.default.url}" class="w-full h-full object-cover">`;
+                document.getElementById('stat-subs').innerText = format(channel.statistics.subscriberCount);
+                document.getElementById('stat-views').innerText = format(channel.statistics.viewCount);
+                document.getElementById('hero-title').innerText = channel.snippet.title;
+
+                // Passo 3: Obter vídeos mais recentes
+                const videoRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&playlistId=${uploadsId}&maxResults=10&key=${API_KEY}`);
+                const videoData = await videoRes.json();
+
+                if (videoData.items && videoData.items.length > 0) {
+                    const videos = videoData.items;
+                    
+                    // Destaque (Primeiro vídeo)
+                    const latest = videos[0];
+                    document.getElementById('hero-desc').innerText = latest.snippet.description.substring(0, 150) + "...";
+                    document.getElementById('main-player').innerHTML = `<iframe src="https://www.youtube.com/embed/${latest.contentDetails.videoId}" allowfullscreen></iframe>`;
+
+                    // Grelha de Vídeos (Restantes)
+                    const grid = document.getElementById('video-grid');
+                    grid.innerHTML = '';
+                    videos.slice(1, 7).forEach(v => {
+                        grid.innerHTML += `
+                            <a href="https://youtube.com/watch?v=${v.contentDetails.videoId}" target="_blank" class="glass p-4 rounded-[2rem] video-card-hover block group">
+                                <img src="${v.snippet.thumbnails.high.url}" class="rounded-2xl w-full aspect-video object-cover mb-4">
+                                <h3 class="font-bold text-sm line-clamp-2 group-hover:text-red-500">${v.snippet.title}</h3>
+                                <p class="text-[10px] text-gray-500 mt-2 uppercase font-bold tracking-widest">${new Date(v.snippet.publishedAt).toLocaleDateString('pt-PT')}</p>
+                            </a>
+                        `;
+                    });
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err);
+            }
+        }
+
+        function format(num) {
+            num = parseInt(num);
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
+```
